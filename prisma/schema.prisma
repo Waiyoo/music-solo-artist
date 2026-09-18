@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Manager {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Artist {
+  id           String   @id @default(cuid())
+  artistName   String
+  stageName    String
+  shortBio     String
+  biography    String
+  genre        String
+  location     String
+  profileImage String?
+  heroImage    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SocialLink {
+  id           String   @id @default(cuid())
+  platform     String
+  label        String
+  url          String
+  icon         String?
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([active, displayOrder])
+}
+
+model Album {
+  id          String      @id @default(cuid())
+  title       String
+  releaseDate DateTime
+  coverArt    String?
+  description String?
+  published   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  songs       AlbumSong[]
+
+  @@index([published, releaseDate])
+}
+
+model Music {
+  id            String              @id @default(cuid())
+  title         String
+  duration      String?
+  audioUrl      String?
+  coverArt      String?
+  published     Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  albums        AlbumSong[]
+  externalLinks ExternalMusicLink[]
+}
+
+model AlbumSong {
+  id      String @id @default(cuid())
+  albumId String
+  musicId String
+  trackNo Int    @default(1)
+  album   Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  music   Music  @relation(fields: [musicId], references: [id], onDelete: Cascade)
+
+  @@unique([albumId, musicId])
+  @@index([albumId, trackNo])
+}
+
+model ExternalMusicLink {
+  id       String @id @default(cuid())
+  musicId  String
+  platform String
+  url      String
+  music    Music  @relation(fields: [musicId], references: [id], onDelete: Cascade)
+
+  @@index([musicId])
+}
+
+model Video {
+  id               String   @id @default(cuid())
+  title            String
+  description      String?
+  thumbnail        String?
+  directVideoUrl   String?
+  externalVideoUrl String?
+  featured         Boolean  @default(false)
+  published        Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([published, featured])
+}
+
+model GalleryAlbum {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  images      GalleryImage[]
+}
+
+model GalleryImage {
+  id       String       @id @default(cuid())
+  albumId  String
+  imageUrl String
+  caption  String?
+  order    Int          @default(0)
+  album    GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId, order])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  venue       String
+  location    String
+  image       String?
+  ticketUrl   String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, eventDate])
+}
+
+model NewsArticle {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  excerpt       String
+  content       String
+  featuredImage String?
+  published     Boolean   @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([published, publishedAt])
+}
+
+model BookingRequest {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  eventType String
+  eventDate DateTime
+  location  String
+  message   String
+  status    BookingStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+enum BookingStatus {
+  NEW
+  CONTACTED
+  CONFIRMED
+  DECLINED
+  ARCHIVED
+}
